@@ -414,6 +414,174 @@ func Test_Marshal(t *testing.T) {
 			assertErr(t, err)
 			assertEq(t, "struct", `{}`, string(bytes))
 		})
+
+		t.Run("omitzero", func(t *testing.T) {
+			type T struct {
+				A int                    `json:",omitzero"`
+				B int8                   `json:",omitzero"`
+				C int16                  `json:",omitzero"`
+				D int32                  `json:",omitzero"`
+				E int64                  `json:",omitzero"`
+				F uint                   `json:",omitzero"`
+				G uint8                  `json:",omitzero"`
+				H uint16                 `json:",omitzero"`
+				I uint32                 `json:",omitzero"`
+				J uint64                 `json:",omitzero"`
+				K float32                `json:",omitzero"`
+				L float64                `json:",omitzero"`
+				O string                 `json:",omitzero"`
+				P bool                   `json:",omitzero"`
+				Q []int                  `json:",omitzero"`
+				R map[string]interface{} `json:",omitzero"`
+				S *struct{}              `json:",omitzero"`
+				T int                    `json:"t,omitzero"`
+			}
+			var v T
+			v.T = 1
+			bytes, err := json.Marshal(&v)
+			assertErr(t, err)
+			assertEq(t, "struct", `{"t":1}`, string(bytes))
+			t.Run("int", func(t *testing.T) {
+				var v struct {
+					A int `json:"a,omitzero"`
+					B int `json:"b"`
+				}
+				v.B = 1
+				bytes, err := json.Marshal(&v)
+				assertErr(t, err)
+				assertEq(t, "int", `{"b":1}`, string(bytes))
+			})
+			t.Run("int8", func(t *testing.T) {
+				var v struct {
+					A int  `json:"a,omitzero"`
+					B int8 `json:"b"`
+				}
+				v.B = 1
+				bytes, err := json.Marshal(&v)
+				assertErr(t, err)
+				assertEq(t, "int8", `{"b":1}`, string(bytes))
+			})
+			t.Run("int16", func(t *testing.T) {
+				var v struct {
+					A int   `json:"a,omitzero"`
+					B int16 `json:"b"`
+				}
+				v.B = 1
+				bytes, err := json.Marshal(&v)
+				assertErr(t, err)
+				assertEq(t, "int16", `{"b":1}`, string(bytes))
+			})
+			t.Run("int32", func(t *testing.T) {
+				var v struct {
+					A int   `json:"a,omitzero"`
+					B int32 `json:"b"`
+				}
+				v.B = 1
+				bytes, err := json.Marshal(&v)
+				assertErr(t, err)
+				assertEq(t, "int32", `{"b":1}`, string(bytes))
+			})
+			t.Run("int64", func(t *testing.T) {
+				var v struct {
+					A int   `json:"a,omitzero"`
+					B int64 `json:"b"`
+				}
+				v.B = 1
+				bytes, err := json.Marshal(&v)
+				assertErr(t, err)
+				assertEq(t, "int64", `{"b":1}`, string(bytes))
+			})
+			t.Run("string", func(t *testing.T) {
+				var v struct {
+					A int    `json:"a,omitzero"`
+					B string `json:"b"`
+				}
+				v.B = "b"
+				bytes, err := json.Marshal(&v)
+				assertErr(t, err)
+				assertEq(t, "string", `{"b":"b"}`, string(bytes))
+			})
+			t.Run("float32", func(t *testing.T) {
+				var v struct {
+					A int     `json:"a,omitzero"`
+					B float32 `json:"b"`
+				}
+				v.B = 1.1
+				bytes, err := json.Marshal(&v)
+				assertErr(t, err)
+				assertEq(t, "float32", `{"b":1.1}`, string(bytes))
+			})
+			t.Run("float64", func(t *testing.T) {
+				var v struct {
+					A int     `json:"a,omitzero"`
+					B float64 `json:"b"`
+				}
+				v.B = 3.14
+				bytes, err := json.Marshal(&v)
+				assertErr(t, err)
+				assertEq(t, "float64", `{"b":3.14}`, string(bytes))
+			})
+			t.Run("slice", func(t *testing.T) {
+				var v struct {
+					A int   `json:"a,omitzero"`
+					B []int `json:"b"`
+				}
+				v.B = []int{1, 2, 3}
+				bytes, err := json.Marshal(&v)
+				assertErr(t, err)
+				assertEq(t, "slice", `{"b":[1,2,3]}`, string(bytes))
+			})
+			t.Run("array", func(t *testing.T) {
+				var v struct {
+					A int    `json:"a,omitzero"`
+					B [2]int `json:"b"`
+				}
+				v.B = [2]int{1, 2}
+				bytes, err := json.Marshal(&v)
+				assertErr(t, err)
+				assertEq(t, "array", `{"b":[1,2]}`, string(bytes))
+			})
+			t.Run("map", func(t *testing.T) {
+				v := new(struct {
+					A int                    `json:"a,omitzero"`
+					B map[string]interface{} `json:"b"`
+				})
+				v.B = map[string]interface{}{"c": 1}
+				bytes, err := json.Marshal(v)
+				assertErr(t, err)
+				assertEq(t, "array", `{"b":{"c":1}}`, string(bytes))
+			})
+		})
+		t.Run("head_omitzero", func(t *testing.T) {
+			type T struct {
+				A *struct{} `json:"a,omitzero"`
+			}
+			var v T
+			bytes, err := json.Marshal(&v)
+			assertErr(t, err)
+			assertEq(t, "struct", `{}`, string(bytes))
+		})
+		t.Run("pointer_head_omitzero", func(t *testing.T) {
+			type V struct{}
+			type U struct {
+				B *V `json:"b,omitzero"`
+			}
+			type T struct {
+				A *U `json:"a"`
+			}
+			bytes, err := json.Marshal(&T{A: &U{}})
+			assertErr(t, err)
+			assertEq(t, "struct", `{"a":{}}`, string(bytes))
+		})
+		t.Run("head_int_omitzero", func(t *testing.T) {
+			type T struct {
+				A int `json:"a,omitzero"`
+			}
+			var v T
+			bytes, err := json.Marshal(&v)
+			assertErr(t, err)
+			assertEq(t, "struct", `{}`, string(bytes))
+		})
 	})
 	t.Run("slice", func(t *testing.T) {
 		t.Run("[]int", func(t *testing.T) {
@@ -1769,6 +1937,191 @@ func TestOmitEmpty(t *testing.T) {
 	}
 	if got := string(got); got != optionalsExpected {
 		t.Errorf(" got: %s\nwant: %s\n", got, optionalsExpected)
+	}
+}
+
+type OptionalsZero struct {
+	Sr string `json:"sr"`
+	So string `json:"so,omitzero"`
+	Sw string `json:"-"`
+
+	Ir int `json:"omitzero"` // actually named omitzero, not an option
+	Io int `json:"io,omitzero"`
+
+	Slr       []string `json:"slr,random"`
+	Slo       []string `json:"slo,omitzero"`
+	SloNonNil []string `json:"slononnil,omitzero"`
+
+	Mr  map[string]any `json:"mr"`
+	Mo  map[string]any `json:",omitzero"`
+	Moo map[string]any `json:"moo,omitzero"`
+
+	Fr   float64    `json:"fr"`
+	Fo   float64    `json:"fo,omitzero"`
+	Foo  float64    `json:"foo,omitzero"`
+	Foo2 [2]float64 `json:"foo2,omitzero"`
+
+	Br bool `json:"br"`
+	Bo bool `json:"bo,omitzero"`
+
+	Ur uint `json:"ur"`
+	Uo uint `json:"uo,omitzero"`
+
+	Str struct{} `json:"str"`
+	Sto struct{} `json:"sto,omitzero"`
+
+	Time      time.Time     `json:"time,omitzero"`
+	TimeLocal time.Time     `json:"timelocal,omitzero"`
+	Nzs       NonZeroStruct `json:"nzs,omitzero"`
+
+	NilIsZeroer    isZeroer       `json:"niliszeroer,omitzero"`    // nil interface
+	NonNilIsZeroer isZeroer       `json:"nonniliszeroer,omitzero"` // non-nil interface
+	NoPanicStruct0 isZeroer       `json:"nps0,omitzero"`           // non-nil interface with nil pointer
+	NoPanicStruct1 isZeroer       `json:"nps1,omitzero"`           // non-nil interface with non-nil pointer
+	NoPanicStruct2 *NoPanicStruct `json:"nps2,omitzero"`           // nil pointer
+	NoPanicStruct3 *NoPanicStruct `json:"nps3,omitzero"`           // non-nil pointer
+	NoPanicStruct4 NoPanicStruct  `json:"nps4,omitzero"`           // concrete type
+}
+
+type isZeroer interface {
+	IsZero() bool
+}
+
+type NonZeroStruct struct{}
+
+func (nzs NonZeroStruct) IsZero() bool {
+	return false
+}
+
+type NoPanicStruct struct {
+	Int int `json:"int,omitzero"`
+}
+
+func (nps *NoPanicStruct) IsZero() bool {
+	return nps.Int != 0
+}
+
+func TestOmitZero(t *testing.T) {
+	const want = `{
+ "sr": "",
+ "omitzero": 0,
+ "slr": null,
+ "slononnil": [],
+ "mr": {},
+ "Mo": {},
+ "fr": 0,
+ "br": false,
+ "ur": 0,
+ "str": {},
+ "nzs": {},
+ "nps1": {},
+ "nps3": {},
+ "nps4": {}
+}`
+	var o OptionalsZero
+	o.Sw = "something"
+	o.SloNonNil = make([]string, 0)
+	o.Mr = map[string]any{}
+	o.Mo = map[string]any{}
+
+	o.Foo = -0
+	o.Foo2 = [2]float64{+0, -0}
+
+	o.TimeLocal = time.Time{}.Local()
+
+	o.NonNilIsZeroer = time.Time{}
+	o.NoPanicStruct0 = (*NoPanicStruct)(nil)
+	o.NoPanicStruct1 = &NoPanicStruct{}
+	o.NoPanicStruct3 = &NoPanicStruct{}
+
+	got, err := json.MarshalIndent(&o, "", " ")
+	if err != nil {
+		t.Fatalf("MarshalIndent error: %v", err)
+	}
+	if got := string(got); got != want {
+		t.Errorf("MarshalIndent:\n\tgot:  %s\n\twant: %s\n", got, want)
+	}
+}
+
+func TestOmitZeroMap(t *testing.T) {
+	const want = `{
+ "foo": {
+  "sr": "",
+  "omitzero": 0,
+  "slr": null,
+  "mr": null,
+  "fr": 0,
+  "br": false,
+  "ur": 0,
+  "str": {},
+  "nzs": {},
+  "nps4": {}
+ }
+}`
+	m := map[string]OptionalsZero{"foo": {}}
+	got, err := json.MarshalIndent(m, "", " ")
+	if err != nil {
+		t.Fatalf("MarshalIndent error: %v", err)
+	}
+	if got := string(got); got != want {
+		fmt.Println(got)
+		t.Errorf("MarshalIndent:\n\tgot:  %s\n\twant: %s\n", got, want)
+	}
+}
+
+type OptionalsEmptyZero struct {
+	Sr string `json:"sr"`
+	So string `json:"so,omitempty,omitzero"`
+	Sw string `json:"-"`
+
+	Io int `json:"io,omitempty,omitzero"`
+
+	Slr       []string `json:"slr,random"`
+	Slo       []string `json:"slo,omitempty,omitzero"`
+	SloNonNil []string `json:"slononnil,omitempty,omitzero"`
+
+	Mr map[string]any `json:"mr"`
+	Mo map[string]any `json:",omitempty,omitzero"`
+
+	Fr float64 `json:"fr"`
+	Fo float64 `json:"fo,omitempty,omitzero"`
+
+	Br bool `json:"br"`
+	Bo bool `json:"bo,omitempty,omitzero"`
+
+	Ur uint `json:"ur"`
+	Uo uint `json:"uo,omitempty,omitzero"`
+
+	Str struct{} `json:"str"`
+	Sto struct{} `json:"sto,omitempty,omitzero"`
+
+	Time time.Time     `json:"time,omitempty,omitzero"`
+	Nzs  NonZeroStruct `json:"nzs,omitempty,omitzero"`
+}
+
+func TestOmitEmptyZero(t *testing.T) {
+	const want = `{
+ "sr": "",
+ "slr": null,
+ "mr": {},
+ "fr": 0,
+ "br": false,
+ "ur": 0,
+ "str": {},
+ "nzs": {}
+}`
+	var o OptionalsEmptyZero
+	o.Sw = "something"
+	o.SloNonNil = make([]string, 0)
+	o.Mr = map[string]any{}
+	o.Mo = map[string]any{}
+
+	got, err := json.MarshalIndent(&o, "", " ")
+	if err != nil {
+		t.Fatalf("MarshalIndent error: %v", err)
+	}
+	if got := string(got); got != want {
+		t.Errorf("MarshalIndent:\n\tgot:  %s\n\twant: %s\n", got, want)
 	}
 }
 

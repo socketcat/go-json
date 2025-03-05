@@ -25,6 +25,7 @@ const (
 	IsNilableTypeFlags     OpFlags = 1 << 7
 	MarshalerContextFlags  OpFlags = 1 << 8
 	NonEmptyInterfaceFlags OpFlags = 1 << 9
+	AddrForIsZeroFlags     OpFlags = 1 << 10
 )
 
 type Opcode struct {

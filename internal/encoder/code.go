@@ -580,6 +580,7 @@ func (c *StructCode) Filter(query *FieldQuery) Code {
 			isNilCheck:         field.isNilCheck,
 			isAddrForMarshaler: field.isAddrForMarshaler,
 			isNextOpPtrType:    field.isNextOpPtrType,
+			isAddrForIsZero:    field.isAddrForIsZero,
 		}
 		if len(query.Fields) > 0 {
 			fieldCode.value = fieldCode.value.Filter(query)
@@ -609,6 +610,7 @@ type StructFieldCode struct {
 	isAddrForMarshaler bool
 	isNextOpPtrType    bool
 	isMarshalerContext bool
+	isAddrForIsZero    bool
 }
 
 func (c *StructFieldCode) getStruct() *StructCode {
@@ -633,16 +635,24 @@ func (c *StructFieldCode) getAnonymousStruct() *StructCode {
 
 func optimizeStructHeader(code *Opcode, tag *runtime.StructTag) OpType {
 	headType := code.ToHeaderType(tag.IsString)
-	if tag.IsOmitEmpty {
+	if tag.IsOmitEmpty && !tag.IsOmitZero {
 		headType = headType.HeadToOmitEmptyHead()
+	} else if tag.IsOmitZero && !tag.IsOmitEmpty {
+		headType = headType.HeadToOmitZeroHead()
+	} else if tag.IsOmitEmpty && tag.IsOmitZero {
+		headType = headType.HeadToOmitEmptyZeroHead()
 	}
 	return headType
 }
 
 func optimizeStructField(code *Opcode, tag *runtime.StructTag) OpType {
 	fieldType := code.ToFieldType(tag.IsString)
-	if tag.IsOmitEmpty {
+	if tag.IsOmitEmpty && !tag.IsOmitZero {
 		fieldType = fieldType.FieldToOmitEmptyField()
+	} else if tag.IsOmitZero && !tag.IsOmitEmpty {
+		fieldType = fieldType.FieldToOmitZeroField()
+	} else if tag.IsOmitEmpty && tag.IsOmitZero {
+		fieldType = fieldType.FieldToOmitEmptyZeroField()
 	}
 	return fieldType
 }
@@ -740,6 +750,9 @@ func (c *StructFieldCode) flags() OpFlags {
 	}
 	if c.isMarshalerContext {
 		flags |= MarshalerContextFlags
+	}
+	if c.isAddrForIsZero {
+		flags |= AddrForIsZeroFlags
 	}
 	return flags
 }

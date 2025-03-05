@@ -39,17 +39,49 @@ func (t OpType) IsMultipleOpHead() bool {
 		return true
 	case OpStructHeadOmitEmptyStruct:
 		return true
+	case OpStructHeadOmitZero:
+		return true
+	case OpStructHeadOmitZeroSlice:
+		return true
+	case OpStructHeadOmitZeroArray:
+		return true
+	case OpStructHeadOmitZeroMap:
+		return true
+	case OpStructHeadOmitZeroStruct:
+		return true
+	case OpStructHeadOmitEmptyZero:
+		return true
+	case OpStructHeadOmitEmptyZeroSlice:
+		return true
+	case OpStructHeadOmitEmptyZeroArray:
+		return true
+	case OpStructHeadOmitEmptyZeroMap:
+		return true
+	case OpStructHeadOmitEmptyZeroStruct:
+		return true
 	case OpStructHeadSlicePtr:
 		return true
 	case OpStructHeadOmitEmptySlicePtr:
+		return true
+	case OpStructHeadOmitZeroSlicePtr:
+		return true
+	case OpStructHeadOmitEmptyZeroSlicePtr:
 		return true
 	case OpStructHeadArrayPtr:
 		return true
 	case OpStructHeadOmitEmptyArrayPtr:
 		return true
+	case OpStructHeadOmitZeroArrayPtr:
+		return true
+	case OpStructHeadOmitEmptyZeroArrayPtr:
+		return true
 	case OpStructHeadMapPtr:
 		return true
 	case OpStructHeadOmitEmptyMapPtr:
+		return true
+	case OpStructHeadOmitZeroMapPtr:
+		return true
+	case OpStructPtrHeadOmitEmptyZeroArrayPtr:
 		return true
 	}
 	return false
@@ -77,17 +109,49 @@ func (t OpType) IsMultipleOpField() bool {
 		return true
 	case OpStructFieldOmitEmptyStruct:
 		return true
+	case OpStructFieldOmitZero:
+		return true
+	case OpStructFieldOmitZeroSlice:
+		return true
+	case OpStructFieldOmitZeroArray:
+		return true
+	case OpStructFieldOmitZeroMap:
+		return true
+	case OpStructFieldOmitZeroStruct:
+		return true
+	case OpStructFieldOmitEmptyZero:
+		return true
+	case OpStructFieldOmitEmptyZeroSlice:
+		return true
+	case OpStructFieldOmitEmptyZeroArray:
+		return true
+	case OpStructFieldOmitEmptyZeroMap:
+		return true
+	case OpStructFieldOmitEmptyZeroStruct:
+		return true
 	case OpStructFieldSlicePtr:
 		return true
 	case OpStructFieldOmitEmptySlicePtr:
+		return true
+	case OpStructFieldOmitZeroSlicePtr:
+		return true
+	case OpStructFieldOmitEmptyZeroSlicePtr:
 		return true
 	case OpStructFieldArrayPtr:
 		return true
 	case OpStructFieldOmitEmptyArrayPtr:
 		return true
+	case OpStructFieldOmitZeroArrayPtr:
+		return true
+	case OpStructFieldOmitEmptyZeroArrayPtr:
+		return true
 	case OpStructFieldMapPtr:
 		return true
 	case OpStructFieldOmitEmptyMapPtr:
+		return true
+	case OpStructFieldOmitZeroMapPtr:
+		return true
+	case OpStructPtrHeadOmitEmptyZeroArrayPtr:
 		return true
 	}
 	return false
@@ -598,4 +662,50 @@ func IsNilForMarshaler(v interface{}) bool {
 		return rv.Len() == 0
 	}
 	return false
+}
+
+func IsZero(code *Opcode, v interface{}) bool {
+	rv := reflect.ValueOf(v) // convert by dynamic interface type
+	if (code.Flags & AddrForIsZeroFlags) != 0 {
+		if rv.CanAddr() {
+			rv = rv.Addr()
+		} else {
+			newV := reflect.New(rv.Type())
+			newV.Elem().Set(rv)
+			rv = newV
+		}
+	}
+
+	v = rv.Interface()
+	isZeroer, ok := v.(isZeroer)
+	if !ok {
+		return rv.IsZero()
+	}
+	return isZeroer.IsZero()
+}
+
+func IsZeroNil(code *Opcode, v interface{}) bool {
+	var implIsZero bool
+	rv := reflect.ValueOf(v) // convert by dynamic interface type
+	if (code.Flags & AddrForIsZeroFlags) != 0 {
+		if rv.CanAddr() {
+			rv = rv.Addr()
+		} else {
+			newV := reflect.New(rv.Type())
+			newV.Elem().Set(rv)
+			rv = newV
+		}
+		implIsZero = true
+	}
+
+	if implIsZero || code.Type.Implements(isZeroType) {
+		v = rv.Interface()
+		isZeroer, ok := v.(isZeroer)
+		if !ok {
+			return rv.IsZero()
+		}
+		return (*emptyInterface)(unsafe.Pointer(&isZeroer)).ptr == unsafe.Pointer(nil) || isZeroer.IsZero()
+	}
+
+	return rv.IsZero()
 }

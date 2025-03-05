@@ -17,10 +17,15 @@ type marshalerContext interface {
 	MarshalJSON(context.Context) ([]byte, error)
 }
 
+type isZeroer interface {
+	IsZero() bool
+}
+
 var (
 	marshalJSONType        = reflect.TypeOf((*json.Marshaler)(nil)).Elem()
 	marshalJSONContextType = reflect.TypeOf((*marshalerContext)(nil)).Elem()
 	marshalTextType        = reflect.TypeOf((*encoding.TextMarshaler)(nil)).Elem()
+	isZeroType             = reflect.TypeOf((*isZeroer)(nil)).Elem()
 	jsonNumberType         = reflect.TypeOf(json.Number(""))
 	cachedOpcodeSets       []*OpcodeSet
 	cachedOpcodeMap        unsafe.Pointer // map[uintptr]*OpcodeSet
@@ -633,14 +638,15 @@ func (c *Compiler) structFieldCode(structCode *StructCode, tag *runtime.StructTa
 	fieldType := runtime.Type2RType(field.Type)
 	isIndirectSpecialCase := isPtr && isOnlyOneFirstField
 	fieldCode := &StructFieldCode{
-		typ:           fieldType,
-		key:           tag.Key,
-		tag:           tag,
-		offset:        field.Offset,
-		isAnonymous:   field.Anonymous && !tag.IsTaggedKey && toElemType(fieldType).Kind() == reflect.Struct,
-		isTaggedKey:   tag.IsTaggedKey,
-		isNilableType: c.isNilableType(fieldType),
-		isNilCheck:    true,
+		typ:             fieldType,
+		key:             tag.Key,
+		tag:             tag,
+		offset:          field.Offset,
+		isAnonymous:     field.Anonymous && !tag.IsTaggedKey && toElemType(fieldType).Kind() == reflect.Struct,
+		isTaggedKey:     tag.IsTaggedKey,
+		isNilableType:   c.isNilableType(fieldType),
+		isNilCheck:      true,
+		isAddrForIsZero: c.isPtrIsZeroType(fieldType),
 	}
 	switch {
 	case c.isMovePointerPositionFromHeadToFirstMarshalJSONFieldCase(fieldType, isIndirectSpecialCase):
@@ -890,6 +896,10 @@ func (c *Compiler) isPtrMarshalJSONType(typ *runtime.Type) bool {
 
 func (c *Compiler) isPtrMarshalTextType(typ *runtime.Type) bool {
 	return !typ.Implements(marshalTextType) && runtime.PtrTo(typ).Implements(marshalTextType)
+}
+
+func (c *Compiler) isPtrIsZeroType(typ *runtime.Type) bool {
+	return !typ.Implements(isZeroType) && runtime.PtrTo(typ).Implements(isZeroType)
 }
 
 func (c *Compiler) codeToOpcode(ctx *compileContext, typ *runtime.Type, code Code) *Opcode {

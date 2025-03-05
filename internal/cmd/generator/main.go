@@ -103,7 +103,7 @@ func (t OpType) HeadToPtrHead() OpType {
   }
   suffix := "PtrHead"+t.String()[idx+len("Head"):]
 
-  const toPtrOffset = 2
+  const toPtrOffset = 4
   if strings.Contains(OpType(int(t) + toPtrOffset).String(), suffix) {
     return OpType(int(t) + toPtrOffset)
   }
@@ -119,6 +119,24 @@ func (t OpType) HeadToOmitEmptyHead() OpType {
   return t
 }
 
+func (t OpType) HeadToOmitZeroHead() OpType {
+  const toOmitZeroOffset = 2
+  if strings.Contains(OpType(int(t)+toOmitZeroOffset).String(), "OmitZero") {
+	return OpType(int(t) + toOmitZeroOffset)
+  }
+
+  return t
+}
+
+func (t OpType) HeadToOmitEmptyZeroHead() OpType {
+  const toOmitEmptyZeroOffset = 3
+  if strings.Contains(OpType(int(t)+toOmitEmptyZeroOffset).String(), "OmitEmptyZero") {
+    return OpType(int(t) + toOmitEmptyZeroOffset)
+  }
+
+  return t
+}
+
 func (t OpType) PtrHeadToHead() OpType {
   idx := strings.Index(t.String(), "PtrHead")
   if idx == -1 {
@@ -126,7 +144,7 @@ func (t OpType) PtrHeadToHead() OpType {
   }
   suffix := t.String()[idx+len("Ptr"):]
 
-  const toPtrOffset = 2
+  const toPtrOffset = 4
   if strings.Contains(OpType(int(t) - toPtrOffset).String(), suffix) {
     return OpType(int(t) - toPtrOffset)
   }
@@ -139,10 +157,10 @@ func (t OpType) FieldToEnd() OpType {
     return t
   }
   suffix := t.String()[idx+len("Field"):]
-  if suffix == "" || suffix == "OmitEmpty" {
+  if suffix == "" || suffix == "OmitEmpty" || suffix == "OmitZero" || suffix == "OmitEmptyZero" {
     return t
   }
-  const toEndOffset = 2
+  const toEndOffset = 4
   if strings.Contains(OpType(int(t) + toEndOffset).String(), "End"+suffix) {
     return OpType(int(t) + toEndOffset)
   }
@@ -153,6 +171,22 @@ func (t OpType) FieldToOmitEmptyField() OpType {
   const toOmitEmptyOffset = 1
   if strings.Contains(OpType(int(t) + toOmitEmptyOffset).String(), "OmitEmpty") {
     return OpType(int(t) + toOmitEmptyOffset)
+  }
+  return t
+}
+
+func (t OpType) FieldToOmitZeroField() OpType {
+  const toOmitZeroOffset = 2
+  if strings.Contains(OpType(int(t) + toOmitZeroOffset).String(), "OmitZero") {
+    return OpType(int(t) + toOmitZeroOffset)
+  }
+  return t
+}
+
+func (t OpType) FieldToOmitEmptyZeroField() OpType {
+  const toOmitEmptyZeroOffset = 3
+  if strings.Contains(OpType(int(t) + toOmitEmptyZeroOffset).String(), "OmitEmptyZero") {
+    return OpType(int(t) + toOmitEmptyZeroOffset)
   }
   return t
 }
@@ -208,7 +242,7 @@ func (t OpType) FieldToOmitEmptyField() OpType {
 	}
 	for _, typ := range append(primitiveTypesUpper, "") {
 		for _, ptrOrNot := range []string{"", "Ptr"} {
-			for _, opt := range []string{"", "OmitEmpty"} {
+			for _, opt := range []string{"", "OmitEmpty", "OmitZero", "OmitEmptyZero"} {
 				ptrOrNot := ptrOrNot
 				opt := opt
 				typ := typ
@@ -227,7 +261,7 @@ func (t OpType) FieldToOmitEmptyField() OpType {
 		}
 	}
 	for _, typ := range append(primitiveTypesUpper, "") {
-		for _, opt := range []string{"", "OmitEmpty"} {
+		for _, opt := range []string{"", "OmitEmpty", "OmitZero", "OmitEmptyZero"} {
 			opt := opt
 			typ := typ
 
@@ -241,7 +275,7 @@ func (t OpType) FieldToOmitEmptyField() OpType {
 				Code: "StructField",
 			})
 		}
-		for _, opt := range []string{"", "OmitEmpty"} {
+		for _, opt := range []string{"", "OmitEmpty", "OmitZero", "OmitEmptyZero"} {
 			opt := opt
 			typ := typ
 

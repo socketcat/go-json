@@ -21,6 +21,8 @@ var (
 	mapitervalue        = encoder.MapIterValue
 	mapiternext         = encoder.MapIterNext
 	maplen              = encoder.MapLen
+	isZero              = encoder.IsZero
+	isZeroNil           = encoder.IsZeroNil
 )
 
 type emptyInterface struct {
